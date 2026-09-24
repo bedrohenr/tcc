@@ -21,6 +21,7 @@ def startRyu(app_path="ryu.app.simple_switch_13", porta=6653, venv_path=".venv",
         ryu_bin,
         '--ofp-tcp-listen-port', str(porta),
         '--verbose',
+        'ryu.app.ofctl_rest',
         app_path
     ]
 
