@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+from functools import partial
+
 from mininet.net import Mininet
 from mininet.node import RemoteController, OVSSwitch
 from mininet.cli import CLI
@@ -8,23 +10,33 @@ from mininet.log import info
 from infraestrutura.mininet.topologia import ArvoreTopo
 
 def start():
+    # Configuração da topologia customizada
     topo = ArvoreTopo()
-    # Instancia a rede informando que usará controlador remoto e Open vSwitch
-    net = Mininet(
-        topo=topo,
-        controller=RemoteController,
-        switch=OVSSwitch
+
+    # Configuração do controlador Ryu na porta 6653
+    RyuController = partial(
+        RemoteController,
+        ip='127.0.0.1',
+        port=6653
+    )
+    
+    # Configura o switch para usar sempre o OpenFlow 1.3
+    OVS13Switch = partial(
+        OVSSwitch, 
+        protocols='OpenFlow13'
     )
 
-    # info('*** Adicionando Controlador Remoto (Ryu) ***\n')
-    # # Aponta para o seu controlador Ryu (porta padrão OpenFlow: 6653)
-    c0 = net.addController('c0', controller=RemoteController, ip='127.0.0.1', port=8080)
+    # Instancia a rede informando que usará a topologia customizada, o Ryu corretamente e o Open vSwitch com OpenFlow 1.3
+    net = Mininet(
+        topo=topo,
+        controller=RyuController,
+        switch=OVS13Switch
+    )
 
     info('*** Iniciando a Rede ***\n')
     net.start()
 
-    info('*** Executando CLI do Mininet ***\n')
-    # CLI(net)
+    info('*** Pingando todos os hosts ***\n')
     net.pingAll()
 
     info('*** Finalizando a Rede ***\n')
