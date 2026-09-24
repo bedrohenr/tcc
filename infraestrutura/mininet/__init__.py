@@ -9,7 +9,7 @@ from mininet.log import info
 
 from infraestrutura.mininet.topologia import ArvoreTopo
 
-def start():
+def startMininet():
     # Configuração da topologia customizada
     topo = ArvoreTopo()
 
@@ -33,11 +33,11 @@ def start():
         switch=OVS13Switch
     )
 
-    info('*** Iniciando a Rede ***\n')
+    info('[*] Iniciando o Mininet \n')
     net.start()
 
-    info('*** Pingando todos os hosts ***\n')
+    info('[*] Pingando todos os hosts \n')
     net.pingAll()
 
-    info('*** Finalizando a Rede ***\n')
+    info('[*] Finalizando o Mininet \n')
     net.stop()
