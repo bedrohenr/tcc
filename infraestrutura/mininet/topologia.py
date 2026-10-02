@@ -16,7 +16,7 @@ class ArvoreTopo(Topo):
         # Switches
         s1 = self.addSwitch('s1', dpid="0000000000000001", protocols='OpenFlow13')
         s2 = self.addSwitch('s2', dpid="0000000000000002", protocols='OpenFlow13')
-        s3 = self.addSwitch('s3', dpid="0000000000000003",protocols='OpenFlow13')
+        s3 = self.addSwitch('s3', dpid="0000000000000003", protocols='OpenFlow13')
 
         # Hosts
         h1 = self.addHost('h1', ip='10.0.0.1/24', mac='00:00:00:00:00:01')
@@ -27,11 +27,12 @@ class ArvoreTopo(Topo):
         # TODO: Especificar velocidade dos links
 
         # Enlaces entre switches
-        self.addLink(s1, s2)
-        self.addLink(s1, s3)
+        self.addLink(s1, s2) # Switch 1 Port #1 -- Switch 2 Port # 1
+        self.addLink(s1, s3) # Switch 1 Port #2 -- Switch 3 Port # 1
 
         # Enlaces entre hosts e switches folha
-        self.addLink(s2, h1)
-        self.addLink(s2, h2)
-        self.addLink(s3, h3)
-        self.addLink(s3, h4)
+        self.addLink(s2, h1) # Switch 2 Port #2
+        self.addLink(s2, h2) # Switch 2 Port #3
+
+        self.addLink(s3, h3) # Switch 3 Port #2
+        self.addLink(s3, h4) # Switch 3 Port #3
