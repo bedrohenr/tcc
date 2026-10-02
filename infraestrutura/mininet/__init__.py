@@ -47,9 +47,10 @@ def startMininet():
         
     h1 = net.get('h1')
     h2 = net.get('h2')
-    while(True):
+    for i in range(0, 60):
         h1.cmd('iperf -c %s -p %s -n %d -i 1 -yc > /dev/null &' % (h2.IP(), port, data_size))
-        sleep(5)
+        print('pacote enviado')
+        sleep(1)
 
     # for client in net.hosts:
     #     for server in net.hosts:
