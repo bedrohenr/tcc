@@ -3,6 +3,7 @@ from time import sleep
 from functools import partial
 
 from mininet.net import Mininet
+from mininet.clean import Cleanup
 from mininet.node import RemoteController, OVSSwitch
 from mininet.cli import CLI
 from mininet.log import info
@@ -10,6 +11,7 @@ from mininet.log import info
 from infraestrutura.mininet.topologia import ArvoreTopo
 
 def startMininet():
+
     # Configuração da topologia customizada
     topo = ArvoreTopo()
 
@@ -33,7 +35,7 @@ def startMininet():
         switch=OVS13Switch
     )
 
-    info('[*] Iniciando o Mininet \n')
+    info('[*] Iniciando o Mininet \n\n')
     net.start()
 
     # info('[*] Pingando todos os hosts \n')
@@ -47,7 +49,7 @@ def startMininet():
         
     h1 = net.get('h1')
     h2 = net.get('h2')
-    for i in range(0, 60):
+    for i in range(0, 99999):
         h1.cmd('iperf -c %s -p %s -n %d -i 1 -yc > /dev/null &' % (h2.IP(), port, data_size))
         print('pacote enviado')
         sleep(1)
@@ -59,3 +61,7 @@ def startMininet():
                 
     info('[*] Finalizando o Mininet \n')
     net.stop()
+
+def limparResiduosMininet():
+    info('[*] Limpando residuos de execuções anteriores \n\n')
+    Cleanup.cleanup()

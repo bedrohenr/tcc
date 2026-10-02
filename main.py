@@ -1,4 +1,4 @@
-from infraestrutura.mininet import startMininet
+from infraestrutura.mininet import startMininet, limparResiduosMininet
 from infraestrutura.ryu import startRyu
 
 from monitoramento import startMonitoramento
@@ -8,6 +8,8 @@ from mininet.log import setLogLevel
 def startInfraestrutura():
     ryu_process = None
     log_fd = None
+
+    limparResiduosMininet()
 
     try:
         # 1. Inicia o ryu-manager apontando para o seu script de monitoramento
@@ -24,14 +26,14 @@ def startInfraestrutura():
     finally:
         # 3. Garante o encerramento do ryu-manager ao final (mesmo se ocorrer erro)
         if ryu_process:
-            print("[*] Encerrando o ryu-manager...")
+            print("[*] Encerrando o ryu-manager...\n")
             ryu_process.terminate() # Envia SIGTERM
             ryu_process.wait()      # Aguarda o processo fechar totalmente
         
         if log_fd:
             log_fd.close()
             
-        print("[+] Processo do Ryu finalizado com sucesso.")
+        print("[+] Processo do Ryu finalizado com sucesso.\n")
 
 if __name__ == '__main__':
     setLogLevel('info')
