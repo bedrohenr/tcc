@@ -1,8 +1,11 @@
 from infraestrutura.mininet import startMininet
 from infraestrutura.ryu import startRyu
+
+from monitoramento import startMonitoramento
+
 from mininet.log import setLogLevel
 
-def start():
+def startInfraestrutura():
     ryu_process = None
     log_fd = None
 
@@ -32,4 +35,5 @@ def start():
 
 if __name__ == '__main__':
     setLogLevel('info')
-    start()
+    startInfraestrutura()
+    # startMonitoramento()
