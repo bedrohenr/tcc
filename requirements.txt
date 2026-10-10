@@ -1,3 +1,5 @@
 mininet
 eventlet==0.30.2 # Resolvendo futuras complicações com o ryu 4.34
 ryu
+influxdb-client
+python-dotenv
