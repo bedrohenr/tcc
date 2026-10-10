@@ -1,11 +1,19 @@
 from time import sleep
 
-from monitoramento.modulo_processamento.coleta import getRXFromSwitchPort
+from monitoramento.modulo_processamento.coleta import getRXTXFromSwitch
 
-ROOT_URL = "http://localhost:8080"
+CONTROLLER_API_URL = "http://localhost:8080"
 
-def startMonitoramento():
-    for i in range(0,5):
-        getRXFromSwitchPort(ROOT_URL, 2)
+def startMonitoramento(topo):
+
+    for i in range(0,999999):
+        for switch in topo.switches():
+            # print(topo.nodeInfo(switch))
+            # print(topo.nodeInfo(switch).get("dpid"))
+            switch_info = topo.nodeInfo(switch)
+            print(switch_info.get('dpid'))
+            dpid = int(switch_info.get('dpid'), 16)
+
+            getRXTXFromSwitch(CONTROLLER_API_URL, dpid)
         print()
         sleep(1)
