@@ -1,3 +1,4 @@
+from infraestrutura.mininet.topologia import ArvoreTopo
 from infraestrutura.mininet import startMininet, limparResiduosMininet
 from infraestrutura.ryu import startRyu
 
@@ -5,7 +6,7 @@ from monitoramento import startMonitoramento
 
 from mininet.log import setLogLevel
 
-def startInfraestrutura():
+def startInfraestrutura(topo):
     ryu_process = None
     log_fd = None
 
@@ -21,7 +22,7 @@ def startInfraestrutura():
 
         # 2. Aqui entra a chamada da sua rede Mininet (net.start(), pingAll, etc.)
         # Inicia o mininet
-        startMininet() 
+        startMininet(topo) 
 
     finally:
         # 3. Garante o encerramento do ryu-manager ao final (mesmo se ocorrer erro)
@@ -37,5 +38,8 @@ def startInfraestrutura():
 
 if __name__ == '__main__':
     setLogLevel('info')
-    startInfraestrutura()
+
+    topo = ArvoreTopo()
+
+    startInfraestrutura(topo)
     # startMonitoramento()

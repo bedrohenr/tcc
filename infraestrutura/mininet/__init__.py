@@ -2,6 +2,9 @@
 from time import sleep
 from functools import partial
 
+from mininet.util import custom
+from mininet.node import CPULimitedHost
+from mininet.link import TCLink
 from mininet.net import Mininet
 from mininet.clean import Cleanup
 from mininet.node import RemoteController, OVSSwitch
@@ -10,10 +13,10 @@ from mininet.log import info
 
 from infraestrutura.mininet.topologia import ArvoreTopo
 
-def startMininet():
+def startMininet(topo):
 
     # Configuração da topologia customizada
-    topo = ArvoreTopo()
+    # topo = ArvoreTopo()
 
     # Configuração do controlador Ryu na porta 6653
     RyuController = partial(
@@ -28,11 +31,15 @@ def startMininet():
         protocols='OpenFlow13'
     )
 
+    link = custom(TCLink, bw=100)
+    # host = custom(CPULimitedHost, cpu=4)
     # Instancia a rede informando que usará a topologia customizada, o Ryu corretamente e o Open vSwitch com OpenFlow 1.3
     net = Mininet(
         topo=topo,
         controller=RyuController,
-        switch=OVS13Switch
+        switch=OVS13Switch,
+        # host=host,
+        link=link
     )
 
     info('[*] Iniciando o Mininet \n\n')
@@ -43,7 +50,7 @@ def startMininet():
 
     # Inicia o teste de comunicacao de todos para todos
     port = 5001
-    data_size = 5_000_000_000
+    data_size = 5_000
     for h in net.hosts:
         h.cmd('iperf -s -p %s > /dev/null &' % port)
         
