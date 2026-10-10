@@ -1,0 +1,42 @@
+version: '3.8'
+services:
+  influxdb:
+    image: influxdb:2.7
+    container_name: sdn_influxdb
+    restart: always
+    ports:
+      - "${INFLUXDB_PORT_IN}:${INFLUXDB_PORT_OUT}"
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=${INFLUXDB_MODE}
+      - DOCKER_INFLUXDB_INIT_USERNAME=${INFLUXDB_USERNAME}
+      - DOCKER_INFLUXDB_INIT_PASSWORD=${INFLUXDB_PASSWORD}
+      - DOCKER_INFLUXDB_INIT_ORG=${INFLUXDB_ORG}
+      - DOCKER_INFLUXDB_INIT_BUCKET=${INFLUXDB_BUCKET}
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_ADMIN_TOKEN}
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+      - influxdb_config:/etc/influxdb2
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  grafana:
+      image: grafana/grafana:latest
+      container_name: sdn_grafana
+      restart: always
+      ports:
+        - "${GRAFANA_PORT_IN}:${GRAFANA_PORT_OUT}"
+      environment:
+        - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER}
+        - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      volumes:
+        - grafana_data:/var/lib/grafana
+      depends_on:
+        influxdb:
+          condition: service_healthy
+volumes:
+  influxdb_data:
+  influxdb_config:
+  grafana_data:
