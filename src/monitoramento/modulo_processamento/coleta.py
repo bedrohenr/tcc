@@ -1,6 +1,6 @@
 from requests import get, exceptions
 
-from monitoramento.influxdb import InfluxDBHelper
+from src.monitoramento.influxdb import InfluxDBHelper
 
 def getRXTXFromSwitch(root, dpid):
     InfluxDB = InfluxDBHelper()

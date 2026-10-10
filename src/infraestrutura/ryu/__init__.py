@@ -15,7 +15,7 @@ def startRyu(app_path="ryu.app.simple_switch_13", porta=6653, venv_path=".venv",
     if not os.path.isfile(ryu_bin):
         raise FileNotFoundError(f"Binário do ryu-manager não encontrado em: {ryu_bin}")
 
-    print(f"[*] Executando ryu-manager via .venv: {ryu_bin}")
+    print(f"[*] Executando ryu-manager via .venv: {ryu_bin}\n\n")
 
     cmd = [
         ryu_bin,

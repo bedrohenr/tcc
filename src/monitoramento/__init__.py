@@ -1,6 +1,6 @@
 from time import sleep
 
-from monitoramento.modulo_processamento.coleta import getRXTXFromSwitch
+from src.monitoramento.modulo_processamento.coleta import getRXTXFromSwitch
 
 CONTROLLER_API_URL = "http://localhost:8080"
 

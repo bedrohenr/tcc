@@ -11,7 +11,7 @@ from mininet.node import RemoteController, OVSSwitch
 from mininet.cli import CLI
 from mininet.log import info
 
-from infraestrutura.mininet.topologia import ArvoreTopo
+from src.infraestrutura.mininet.topologia import ArvoreTopo
 
 def startMininet(topo):
 

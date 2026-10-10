@@ -5,11 +5,11 @@ class ArvoreTopo(Topo):
     """
     Topologia em Arvore com Depth=2 e Fanout=2
     
-                      [ s1 ]             <-- Nível 1: Switch Raiz
-                    //        \\
-                [ s2 ]        [ s3 ]      <-- Nível 2: Switches Folha
+                          [ s1 ]             <-- Nível 1: Switch Raiz
+                    //            \\
+                 [ s2 ]           [ s3 ]      <-- Nível 2: Switches Folha
                //      \\      //      \\
-            (h1)      (h2) (h3)     (h4)  <-- Hosts
+            (h1)      (h2)   (h3)       (h4)  <-- Hosts
     """
 
     def build(self):

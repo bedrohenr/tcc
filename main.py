@@ -1,8 +1,8 @@
-from infraestrutura.mininet.topologia import ArvoreTopo
-from infraestrutura.mininet import startMininet, limparResiduosMininet
-from infraestrutura.ryu import startRyu
+from src.infraestrutura.mininet.topologia import ArvoreTopo
+from src.infraestrutura.mininet import startMininet, limparResiduosMininet
+from src.infraestrutura.ryu import startRyu
 
-from monitoramento import startMonitoramento
+from src.monitoramento import startMonitoramento
 
 from mininet.log import setLogLevel
 
@@ -17,7 +17,7 @@ def startInfraestrutura(topo):
         ryu_process, log_fd = startRyu(
             app_path="ryu.app.simple_switch_13", 
             porta=6653,
-            arquivo_log="infraestrutura/ryu/logs/ryu.log"
+            arquivo_log="src/infraestrutura/ryu/logs/ryu.log"
         )
 
         # 2. Aqui entra a chamada da sua rede Mininet (net.start(), pingAll, etc.)
