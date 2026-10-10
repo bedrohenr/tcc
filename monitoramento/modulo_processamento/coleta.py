@@ -1,6 +1,9 @@
-from requests import get
+from requests import get, exceptions
 
-def getRXFromSwitchPort(root, dpid, switchPort = None):
+from monitoramento.influxdb import InfluxDBHelper
+
+def getRXTXFromSwitch(root, dpid, switchPort = None):
+    InfluxDB = InfluxDBHelper()
     port = ''
     if(switchPort):
         port = f"[{switchPort}]"
@@ -9,33 +12,38 @@ def getRXFromSwitchPort(root, dpid, switchPort = None):
 
     print(url)
 
-    response = get(url)
+    try:
+        response = get(url)
 
-    data = response.json()
-    # print(data["2"][1])
+        data = response.json()
+        # Porta 0 = local
 
-    port = 1
-    print(f"Switch {dpid} Port #{port}")
-    print(f"rx: { data[str(dpid)][port]['rx_bytes'] }")
-    print(f"tx: { data[str(dpid)][port]['tx_bytes'] }")
+        port_no = 1
+        rx_bytes = data[str(dpid)][port_no]['rx_bytes']
+        tx_bytes = data[str(dpid)][port_no]['tx_bytes']
+        print(f"Switch s{dpid} Port #{port_no}")
+        print(f"rx: { data[str(dpid)][port_no]['rx_bytes'] }")
+        print(f"tx: { data[str(dpid)][port_no]['tx_bytes'] }")
 
-    port = 2
-    print(f"Switch {dpid} Port #{port}")
-    print(f"rx: { data[str(dpid)][port]['rx_bytes'] }")
-    print(f"tx: { data[str(dpid)][port]['tx_bytes'] }")
+        InfluxDB.write_port_rx_tx(dpid, port_no, rx_bytes, tx_bytes)
 
-    port = 3
-    print(f"Switch {dpid} Port #{port}")
-    print(f"rx: { data[str(dpid)][port]['rx_bytes'] }")
-    print(f"tx: { data[str(dpid)][port]['tx_bytes'] }")
+        port_no = 2
+        rx_bytes = data[str(dpid)][port_no]['rx_bytes']
+        tx_bytes = data[str(dpid)][port_no]['tx_bytes']
+        print(f"Switch s{dpid} Port #{port_no}")
+        print(f"rx: { data[str(dpid)][port_no]['rx_bytes'] }")
+        print(f"tx: { data[str(dpid)][port_no]['tx_bytes'] }")
 
-    # print(data["rx_bytes"])
-    # print(data["tx_bytes"])
-    # print(response.content)
-    # for r in response.json():
-    #     print(r.get("rx_bytes"))
-    #     print(r.get("tx_bytes"))
-    #     print()
-    # print(response["rx_bytes"])
-    # print(response["tx_bytes"])
+        InfluxDB.write_port_rx_tx(dpid, port_no, rx_bytes, tx_bytes)
 
+        port_no = 3
+        rx_bytes = data[str(dpid)][port_no]['rx_bytes']
+        tx_bytes = data[str(dpid)][port_no]['tx_bytes']
+        print(f"Switch s{dpid} Port #{port_no}")
+        print(f"rx: { data[str(dpid)][port_no]['rx_bytes'] }")
+        print(f"tx: { data[str(dpid)][port_no]['tx_bytes'] }")
+
+        InfluxDB.write_port_rx_tx(dpid, port_no, rx_bytes, tx_bytes)
+
+    except exceptions.ConnectionError:
+        print('connection err')
