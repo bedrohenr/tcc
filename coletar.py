@@ -1,4 +1,7 @@
 from monitoramento import startMonitoramento
 
-# if __name__ == '__main__':
-startMonitoramento()
+from infraestrutura.mininet.topologia import ArvoreTopo
+
+topo = ArvoreTopo()
+
+startMonitoramento(topo)
