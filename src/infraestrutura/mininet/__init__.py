@@ -13,62 +13,83 @@ from mininet.log import info
 
 from src.infraestrutura.mininet.topologia import ArvoreTopo
 
-def startMininet(topo):
+class MininetExt():
+    # Configs Ryu
+    RYU_IP='127.0.0.1'
+    RYU_PORT=6653
 
-    # Configuração da topologia customizada
-    # topo = ArvoreTopo()
+    # Config Switch
+    OVS13_PROTOCOL='OpenFlow13'
 
-    # Configuração do controlador Ryu na porta 6653
-    RyuController = partial(
-        RemoteController,
-        ip='127.0.0.1',
-        port=6653
-    )
+    def __init__(self, bw, topo):
+        self.bandwidth = bw
+        self.topology = topo
+
+    def getRyu(self):
+        # Configuração do controlador Ryu na porta 6653
+        return partial(
+            RemoteController,
+            ip=self.RYU_IP,
+            port=self.RYU_PORT
+        )
     
-    # Configura o switch para usar sempre o OpenFlow 1.3
-    OVS13Switch = partial(
-        OVSSwitch, 
-        protocols='OpenFlow13'
-    )
+    def getSwitchConfig(self):
+        # Configura o switch para usar sempre o OpenFlow 1.3
+        return partial(
+            OVSSwitch, 
+            protocols=self.OVS13_PROTOCOL
+        )
 
-    link = custom(TCLink, bw=100)
-    # host = custom(CPULimitedHost, cpu=4)
-    # Instancia a rede informando que usará a topologia customizada, o Ryu corretamente e o Open vSwitch com OpenFlow 1.3
-    net = Mininet(
-        topo=topo,
-        controller=RyuController,
-        switch=OVS13Switch,
-        # host=host,
-        link=link
-    )
+    def start(self):
 
-    info('[*] Iniciando o Mininet \n\n')
-    net.start()
-
-    # info('[*] Pingando todos os hosts \n')
-    # net.pingAll()
-
-    # Inicia o teste de comunicacao de todos para todos
-    port = 5001
-    data_size = 5_000
-    for h in net.hosts:
-        h.cmd('iperf -s -p %s > /dev/null &' % port)
+        # Configuração do controlador Ryu na porta 6653
+        ryuController = self.getRyu()
         
-    h1 = net.get('h1')
-    h2 = net.get('h2')
-    for i in range(0, 99999):
-        h1.cmd('iperf -c %s -p %s -n %d -i 1 -yc > /dev/null &' % (h2.IP(), port, data_size))
-        print('pacote enviado')
-        sleep(1)
+        # Configura o switch para usar sempre o OpenFlow 1.3
+        ovs13Switch = self.getSwitchConfig()
 
-    # for client in net.hosts:
-    #     for server in net.hosts:
-    #         if client != server:
-    #             client.cmd('iperf -c %s -p %s -n %d -i 1 -yc > /dev/null &' % (server.IP(), port, data_size))
-                
-    info('[*] Finalizando o Mininet \n')
-    net.stop()
+        link = custom(TCLink, bw=self.bandwidth)
+        # host = custom(CPULimitedHost, cpu=4)
 
-def limparResiduosMininet():
-    info('[*] Limpando residuos de execuções anteriores \n\n')
-    Cleanup.cleanup()
+        net = Mininet(
+            topo = self.topology,
+            controller = ryuController,
+            switch = ovs13Switch,
+            # host = host,
+            link = link
+        )
+
+        info('[*] Iniciando o Mininet \n\n')
+        net.start()
+
+        net.pingAll()
+        # self.simularTrafego(net)
+
+        info('[*] Finalizando o Mininet \n')
+        net.stop()
+
+    def simularTrafego(self, net):
+        info('[*] Enviando pacotes \n\n')
+
+        # Inicia o teste de comunicacao de todos para todos
+        port = 5001
+        data_size = 5_000
+        for h in net.hosts:
+            h.cmd('iperf -s -p %s > /dev/null &' % port)
+            
+        h1 = net.get('h1')
+        h2 = net.get('h2')
+        for i in range(0, 99999):
+            h1.cmd('iperf -c %s -p %s -n %d -i 1 -yc > /dev/null &' % (h2.IP(), port, data_size))
+            print('pacote enviado')
+            sleep(1)
+
+        # for client in net.hosts:
+        #     for server in net.hosts:
+        #         if client != server:
+        #             client.cmd('iperf -c %s -p %s -n %d -i 1 -yc > /dev/null &' % (server.IP(), port, data_size))
+
+
+    def clean(self):
+        info('[*] Limpando residuos de execuções anteriores \n\n')
+        Cleanup.cleanup()
