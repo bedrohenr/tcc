@@ -32,7 +32,7 @@ class Ryu():
         if not os.path.isfile(self.bin):
             raise FileNotFoundError(f"[!] Binário do ryu-manager não encontrado em: {self.bin}")
 
-        print(f"[*] Executando ryu-manager via .venv: {self.bin}\n\n")
+        print(f"[*] Executando ryu-manager via .venv: {self.bin}")
 
         cmd = [
             self.bin,
@@ -63,7 +63,7 @@ class Ryu():
             self.log.close()
             raise RuntimeError(f"[!] Falha ao iniciar o ryu-manager. Verifique {self.APP_LOG_FILE}")
         
-        print(f"[*] ryu-manager iniciado.\n\n")
+        print(f"[*] ryu-manager iniciado.")
     
     def end(self):
         # Garante o encerramento do ryu-manager ao final (mesmo se ocorrer erro)
@@ -75,7 +75,7 @@ class Ryu():
         if self.log:
             self.log.close()
             
-        print("[*] Processo do Ryu finalizado com sucesso.\n")
+        print("[*] Processo do Ryu finalizado com sucesso.")
 
 # def startRyu(app_path="ryu.app.simple_switch_13", porta=6653, venv_path=".venv", arquivo_log="ryu.log"):
 #     # OPÇÃO A: Pega automaticamente o binário do .venv que está executando este script

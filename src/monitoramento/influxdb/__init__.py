@@ -30,7 +30,7 @@ class InfluxDBHelper:
         point = (
             Point("port_throughput")
             .tag("dpid", f"{dpid:016x}")          # DPID no formato hexadecimal de 16 dígitos
-            .tag("port_no", str(port_no))        # Número da porta no switch
+            .tag("port_no", str(port_no))         # Número da porta no switch
             .field("rx_bytes", int(rx_bytes))     # Total acumulado de bytes recebidos
             .field("tx_bytes", int(tx_bytes))     # Total acumulado de bytes transmitidos
         )
@@ -47,7 +47,7 @@ class InfluxDBHelper:
         point = (
             Point("port_throughput")
             .tag("dpid", f"{dpid:016x}")          # DPID no formato hexadecimal de 16 dígitos
-            .tag("port_no", str(port_no))        # Número da porta no switch
+            .tag("port_no", str(port_no))         # Número da porta no switch
             .field("rx_bps", float(rx_bps))       # Vazão de recepção (bits/s)
             .field("tx_bps", float(tx_bps))       # Vazão de transmissão (bits/s)
             .field("rx_bytes", int(rx_bytes))     # Total acumulado de bytes recebidos
