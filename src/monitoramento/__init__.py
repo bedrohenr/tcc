@@ -1,19 +1,26 @@
 from time import sleep
 
-from src.monitoramento.modulo_processamento.coleta import getRXTXFromSwitch
+from src.monitoramento.modulo_processamento import ModuloProcessamento
 
 CONTROLLER_API_URL = "http://localhost:8080"
 
-def startMonitoramento(topo):
+class Monitoramento():
+    MODULO_PROCESSAMENTO = ModuloProcessamento()
+    def __init__(self, topo):
+        self.topo = topo
 
-    for i in range(0,999999):
-        for switch in topo.switches():
-            # print(topo.nodeInfo(switch))
-            # print(topo.nodeInfo(switch).get("dpid"))
-            switch_info = topo.nodeInfo(switch)
-            print(switch_info.get('dpid'))
-            dpid = int(switch_info.get('dpid'), 16)
+    # Retorna o DPID em base 10
+    def getDPID(self, switch):
+        # print(topo.nodeInfo(switch))
+        # print(topo.nodeInfo(switch).get("dpid"))
+        switch_info = self.topo.nodeInfo(switch)
+        # print(switch_info.get('dpid'))
+        dpid = int(switch_info.get('dpid'), 16)
+        return dpid
 
-            getRXTXFromSwitch(CONTROLLER_API_URL, dpid)
-        print()
-        sleep(1)
+    def start(self):
+        while True:
+            for switch in self.topo.switches():
+                self.MODULO_PROCESSAMENTO.getRXTXFromSwitch(self.getDPID(switch))
+            print()
+            sleep(1)
