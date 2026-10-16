@@ -68,7 +68,7 @@ class Ryu():
     def end(self):
         # Garante o encerramento do ryu-manager ao final (mesmo se ocorrer erro)
         if self.process:
-            print("[*] Encerrando o ryu-manager...\n")
+            print("[*] Encerrando o ryu-manager...")
             self.process.terminate() # Envia SIGTERM
             self.process.wait()      # Aguarda o processo fechar totalmente
         

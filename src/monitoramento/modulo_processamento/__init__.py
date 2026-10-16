@@ -4,23 +4,54 @@ from time import time
 from src.monitoramento.influxdb import InfluxDBHelper
 
 class ModuloProcessamento():
-    ROOT_URL = 'localhost:8080'
+    ROOT_URL = 'http://localhost:8080'
     InfluxDB = InfluxDBHelper()
 
     # Memória de estado anterior: {(dpid, port_no): (rx_bytes, timestamp)}
     prevTX = {} # Up
     prevRX = {} # Down
 
-    def makeRequest(url):
-        print(f"[+] Making request, url: {url}")
-        return get(url).json()
+    def tratarRequisicao(self, url):
+        request_url = f"{self.ROOT_URL}{url}"
+        print(f"[+] Fazendo requisição. url: {request_url}")
+        try:
+            data = get(request_url)
+            print(data)
+            if(data):
+                print("dados coletados")
+                return data.json()
+            else:
+                print("nada")
+        # except exceptions.ConnectionError:
+        #     print('[!] Não foi possível Erro de conexão')
+
+        except exceptions.ConnectionError:
+            print("[!] Erro: Falha na conexão com o servidor/host.")
+
+        except exceptions.HTTPError as err:
+            # Captura erros como 404, 500, 403, etc.
+            if data.status_code == 404:
+                print("[!] Erro: Endpoint não encontrado (404). Verifique a URL.")
+            else:
+                print(f"[!] Erro HTTP {data.status_code}: {err}")
+
+
+        except exceptions.Timeout:
+            print("[!] Erro: A requisição excedeu o tempo limite.")
+
+        except exceptions.RequestException as err:
+            # Captura genérica para qualquer outro erro da biblioteca requests
+            print(f"[!] Erro inesperado no requests: {err}")
 
     def getRXTXFromSwitch(self, dpid):
-        url = f"{self.ROOT_URL}/stats/port/{dpid}"
-        print(url)
+        url = f"/stats/port/{dpid}"
 
         try:
-            data = self.makeRequest(url)
+            data = self.tratarRequisicao(url)
+
+            # Checando falha na requisição     
+            if not data:
+                return
 
             # Passa por cada interface excluindo a LOCAL
             dpid_str = str(dpid)

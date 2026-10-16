@@ -6,6 +6,7 @@ CONTROLLER_API_URL = "http://localhost:8080"
 
 class Monitoramento():
     MODULO_PROCESSAMENTO = ModuloProcessamento()
+
     def __init__(self, topo):
         self.topo = topo
 
@@ -19,8 +20,12 @@ class Monitoramento():
         return dpid
 
     def start(self):
-        while True:
-            for switch in self.topo.switches():
-                self.MODULO_PROCESSAMENTO.getRXTXFromSwitch(self.getDPID(switch))
-            print()
-            sleep(1)
+        try:
+            while True:
+                for switch in self.topo.switches():
+                    self.MODULO_PROCESSAMENTO.getRXTXFromSwitch(self.getDPID(switch))
+                print()
+                sleep(1)
+        except KeyboardInterrupt:
+            print("\n[!] Coleta de dados interrompida pelo usuário.")
+

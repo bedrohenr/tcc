@@ -22,9 +22,10 @@ class MininetExt():
     # Config Switch
     OVS13_PROTOCOL='OpenFlow13'
 
-    def __init__(self, bw, topo):
+    def __init__(self, bw, topo, test_mode):
         self.bandwidth = bw
         self.topology = topo
+        self.test_mode = test_mode
 
     def getRyu(self):
         # Configuração do controlador Ryu na porta 6653
@@ -63,8 +64,10 @@ class MininetExt():
         info('[*] Iniciando o Mininet \n\n')
         net.start()
 
-        # net.pingAll()
-        self.simularTrafego(net)
+        if(self.test_mode == True):
+            net.pingAll()
+        else:
+            self.simularTrafego(net)
 
         info('[*] Finalizando o Mininet \n')
         net.stop()
