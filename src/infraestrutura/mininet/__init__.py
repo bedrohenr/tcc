@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from time import sleep
 from functools import partial
+from random import uniform, randint, sample 
 
 from mininet.util import custom
 from mininet.node import CPULimitedHost
@@ -62,34 +63,61 @@ class MininetExt():
         info('[*] Iniciando o Mininet \n\n')
         net.start()
 
-        net.pingAll()
-        # self.simularTrafego(net)
+        # net.pingAll()
+        self.simularTrafego(net)
 
         info('[*] Finalizando o Mininet \n')
         net.stop()
 
     def simularTrafego(self, net):
-        info('[*] Enviando pacotes \n\n')
+        info('[*] Iniciando geração de tráfego')
+        hosts = net.hosts
 
-        # Inicia o teste de comunicacao de todos para todos
-        port = 5001
-        data_size = 5_000
-        for h in net.hosts:
-            h.cmd('iperf -s -p %s > /dev/null &' % port)
+        # Constantes para comunicacao de todos para todos (hosts)
+        PORT = 5001
+        NUM_PACOTES = 100
+        MIN_DATA_SIZE = 1_000       # 1 KB
+        MAX_DATA_SIZE = 50_000_000  # 1 MB
+        PAUSA_MIN = 0.5             # Segundos
+        PAUSA_MAX = 3.0             # Segundos
+
+        print("[*] Subindo servidores iperf em background em todos os hosts...")
+        for h in hosts:
+            h.cmd(f"iperf -s -p {PORT} > /dev/null &")
+
+        print("[*] Servidores iperf prontos")
+        sleep(1)
             
-        h1 = net.get('h1')
-        h2 = net.get('h2')
-        for i in range(0, 99999):
-            h1.cmd('iperf -c %s -p %s -n %d -i 1 -yc > /dev/null &' % (h2.IP(), port, data_size))
-            print('pacote enviado')
-            sleep(1)
+        try:
+            for i in range(NUM_PACOTES):
+                # Randomiza os hosts a serem escolhidos (Origem != Destino)
+                origem, destino = sample(hosts, 2)
 
-        # for client in net.hosts:
-        #     for server in net.hosts:
-        #         if client != server:
-        #             client.cmd('iperf -c %s -p %s -n %d -i 1 -yc > /dev/null &' % (server.IP(), port, data_size))
+                # Randomiza o tamanho dos dados (bytes)
+                data_size = randint(MIN_DATA_SIZE, MAX_DATA_SIZE)
+                
+                # Randomiza o intervalo de pausa
+                pausa = uniform(PAUSA_MIN, PAUSA_MAX)
 
+                # Dispara o cliente iperf em background (&)
+                cmd = f"iperf -c {destino.IP()} -p {PORT} -n {data_size} -y c > /dev/null 2>&1 &"
+                origem.cmd(cmd)
+
+                print(f"[{i+1}/{NUM_PACOTES}] {origem.name} ({origem.IP()}) -> {destino.name} ({destino.IP()}) | {data_size / 1e6:.2f} MB")
+
+                # Aguardando o tempo aleatorio
+                sleep(pausa)
+
+            print("\n[!] Fim da geração de tráfego.")
+
+        except KeyboardInterrupt:
+            print("\n[!] Geração de tráfego interrompida pelo usuário.")
+        finally:
+            print("[*] Encerrando processos iperf nos hosts...")
+            for h in hosts:
+                h.cmd('killall -9 iperf > /dev/null 2>&1')
 
     def clean(self):
-        info('[*] Limpando residuos de execuções anteriores \n\n')
+        info('[*] Limpando residuos de execuções anteriores')
         Cleanup.cleanup()
+        
