@@ -43,7 +43,6 @@ class MininetExt():
         )
 
     def start(self):
-
         # Configuração do controlador Ryu na porta 6653
         ryuController = self.getRyu()
         

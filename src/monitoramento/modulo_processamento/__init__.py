@@ -35,7 +35,6 @@ class ModuloProcessamento():
             else:
                 print(f"[!] Erro HTTP {data.status_code}: {err}")
 
-
         except exceptions.Timeout:
             print("[!] Erro: A requisição excedeu o tempo limite.")
 
@@ -64,8 +63,8 @@ class ModuloProcessamento():
                     # print(rx_bytes)
                     # print(tx_bytes)
 
-                    self.getThroughputUp(tx_bytes)
-                    self.getThroughputUp(rx_bytes)
+                    self.throughputUp(dpid, port_no, tx_bytes)
+                    self.throughputDown(dpid, port_no, rx_bytes)
 
                     self.InfluxDB.write_port_rx_tx(dpid, port_no, rx_bytes, tx_bytes)
 

@@ -15,7 +15,6 @@ class Infraestrutura():
         mininet.clean()
 
         try:
-
             ryu.start()
             mininet.start()
 
