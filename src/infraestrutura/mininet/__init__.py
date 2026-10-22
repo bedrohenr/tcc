@@ -77,7 +77,7 @@ class MininetExt():
 
         # Constantes para comunicacao de todos para todos (hosts)
         PORT = 5001
-        NUM_PACOTES = 100
+        NUM_PACOTES = 99999999999
         MIN_DATA_SIZE = 1_000       # 1 KB
         MAX_DATA_SIZE = 50_000_000  # 1 MB
         PAUSA_MIN = 0.5             # Segundos

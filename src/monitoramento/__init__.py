@@ -31,7 +31,7 @@ class Monitoramento():
         try:
             while True:
                 for switch in self.topo.switches():
-                    self.MODULO_PROCESSAMENTO.getRXTXFromSwitch(self.getDPID(switch))
+                    self.MODULO_PROCESSAMENTO.collectPortData(self.getDPID(switch))
                 print()
                 sleep(1)
         except KeyboardInterrupt:

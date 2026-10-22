@@ -16,6 +16,8 @@ services:
     volumes:
       - influxdb_data:/var/lib/influxdb2
       - influxdb_config:/etc/influxdb2
+      # Mapeamento do script automatizado de inicialização:
+      - ./src/monitoramento/influxdb/init-buckets.sh:/docker-entrypoint-initdb.d/init-buckets.sh:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8086/ping"]
       interval: 10s

@@ -9,7 +9,6 @@ if __name__ == '__main__':
 
     # Monitoramento executara o main em subprocesso com esta flag -c
     if(flags.coleta == True):
-        print("flags coleta true")
         monitoramento = Monitoramento(topo)
         monitoramento.start()
         exit()

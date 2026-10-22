@@ -1,5 +1,6 @@
 from requests import get, exceptions
 from time import time
+from datetime import datetime, timezone
 
 from src.monitoramento.influxdb import InfluxDBHelper
 
@@ -42,7 +43,8 @@ class ModuloProcessamento():
             # Captura genérica para qualquer outro erro da biblioteca requests
             print(f"[!] Erro inesperado no requests: {err}")
 
-    def getRXTXFromSwitch(self, dpid):
+    # Get RX e TX das portas dos switches
+    def collectPortData(self, dpid):
         url = f"/stats/port/{dpid}"
 
         try:
@@ -63,10 +65,11 @@ class ModuloProcessamento():
                     # print(rx_bytes)
                     # print(tx_bytes)
 
-                    self.throughputUp(dpid, port_no, tx_bytes)
-                    self.throughputDown(dpid, port_no, rx_bytes)
+                    # self.throughputUp(dpid, port_no, tx_bytes)
+                    # self.throughputDown(dpid, port_no, rx_bytes)
 
-                    self.InfluxDB.write_port_rx_tx(dpid, port_no, rx_bytes, tx_bytes)
+                    timestamp = datetime.now(timezone.utc)
+                    self.InfluxDB.write_ports_data(dpid, port_no, rx_bytes, tx_bytes, timestamp)
 
         except exceptions.ConnectionError:
             print('connection err')
