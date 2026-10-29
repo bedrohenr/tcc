@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from time import sleep
 from functools import partial
-from random import uniform, randint, sample 
+from random import uniform, randint, sample, choice 
 
 from mininet.util import custom
 from mininet.node import CPULimitedHost
@@ -64,6 +64,7 @@ class MininetExt():
         net.start()
 
         if(self.test_mode == True):
+            CLI(net)
             net.pingAll()
         else:
             self.simularTrafego(net)
@@ -82,10 +83,11 @@ class MininetExt():
         MAX_DATA_SIZE = 50_000_000  # 1 MB
         PAUSA_MIN = 0.5             # Segundos
         PAUSA_MAX = 3.0             # Segundos
+        BANDWIDTHS = ['200k', '500k', '1M', '2M', '5M', '10M', '15M']
 
         print("[*] Subindo servidores iperf em background em todos os hosts...")
         for h in hosts:
-            h.cmd(f"iperf -s -p {PORT} > /dev/null &")
+            h.cmd(f"iperf -s -p {PORT} -u > /dev/null &")
 
         print("[*] Servidores iperf prontos")
         sleep(1)
@@ -101,11 +103,13 @@ class MininetExt():
                 # Randomiza o intervalo de pausa
                 pausa = uniform(PAUSA_MIN, PAUSA_MAX)
 
+                bandwidth = choice(BANDWIDTHS)
+
                 # Dispara o cliente iperf em background (&)
-                cmd = f"iperf -c {destino.IP()} -p {PORT} -n {data_size} -y c > /dev/null 2>&1 &"
+                cmd = f"iperf -c {destino.IP()} -p {PORT} -n {data_size} -u -b {bandwidth} -y c > /dev/null 2>&1 &"
                 origem.cmd(cmd)
 
-                print(f"[{i+1}/{NUM_PACOTES}] {origem.name} ({origem.IP()}) -> {destino.name} ({destino.IP()}) | {data_size / 1e6:.2f} MB")
+                print(f"[{i+1}/∞] {origem.name} ({origem.IP()}) -> {destino.name} ({destino.IP()}) | {data_size / 1e6:.2f} MB @ {bandwidth}")
 
                 # Aguardando o tempo aleatorio
                 sleep(pausa)
