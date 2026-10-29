@@ -3,6 +3,10 @@ import sys
 import subprocess
 from time import sleep
 
+from requests import post
+from json import dumps
+
+from src.utils.tratarRequisicao import tratarRequisicao
 from src.monitoramento.modulo_processamento import ModuloProcessamento
 
 CONTROLLER_API_URL = "http://localhost:8080"
@@ -14,6 +18,9 @@ class Monitoramento():
 
     process = None
     log = None
+
+    medidoresInstalados = False
+    regrasInstaladas = False
 
     def __init__(self, topo):
         self.topo = topo
@@ -27,11 +34,26 @@ class Monitoramento():
         dpid = int(switch_info.get('dpid'), 16)
         return dpid
 
+    # Retorna true os medidores e regras foram todos instalados
+    def isEnvReady(self):
+        print(f"Ready? {self.medidoresInstalados} - {self.regrasInstaladas}")
+        return (
+            self.medidoresInstalados == True and 
+            self.regrasInstaladas == True
+        )
+
     def start(self):
         try:
+            sleep(5) # Aguardando inicio da API
             while True:
+                if not self.isEnvReady():
+                    self.inicializaMedidoresRegras()
+                    continue # Nao executa a coleta até configurar o ambiente
+
+                print("Ayooooo")
                 for switch in self.topo.switches():
                     self.MODULO_PROCESSAMENTO.collectPortData(self.getDPID(switch))
+                    self.MODULO_PROCESSAMENTO.collectMeterData(self.getDPID(switch))
                 print()
                 sleep(1)
         except KeyboardInterrupt:
@@ -95,3 +117,70 @@ class Monitoramento():
             self.log.close()
             
         print("[*] Processo de Coleta de dados finalizado com sucesso.")
+    
+    def inicializaMedidoresRegras(self):
+        print("[*] Configurando Medidores e Regras de Fluxo...")
+        self.inicializaMedidores()
+        self.inicializaRegrasDeFluxo()
+
+    def inicializaMedidores(self):
+        print("[*] Instalando Medidores...")
+
+        if self.medidoresInstalados:
+            return
+
+        # Criando o Medidor (Meter ID: 1) no Switch 2 (DPID 2) com limite de 1000 kbps (1 Mbps)
+        meter_data = {
+            "dpid": 2,
+            "flags": "KBPS",
+            "meter_id": 1,
+            "bands": [
+                {
+                    "type": "DROP",
+                    "rate": 1000
+                }
+            ]
+        }
+        
+        response = tratarRequisicao(
+            "post",
+            f"{CONTROLLER_API_URL}/stats/meterentry/add",
+            {"Content-Type": "application/json"},
+            meter_data
+        )
+        # print("meter response")
+        # print(res)
+        # print(dir(res))
+        if response and response.status_code == 200:
+            self.medidoresInstalados = True
+            print("[+] Medidor criado com sucesso!")
+
+    def inicializaRegrasDeFluxo(self):
+        print("[*] Instalando Regras de Fluxo no Ryu...")
+        # Criando a Regra de Fluxo (Flow Entry) associando o tráfego ao Meter 1
+        flow_data = {
+            "dpid": 2,
+            "priority": 100,
+            "match": {
+                "dl_type": 2048,
+                "nw_dst": "10.0.0.2"
+            },
+            "actions": [
+                {"type": "METER", "meter_id": 1},
+                {"type": "OUTPUT", "port": 2}
+            ]
+        }
+        
+        # print(dumps(flow_data))
+        response = tratarRequisicao(
+            "post",
+            f"{CONTROLLER_API_URL}/stats/flowentry/add",
+            {"Content-Type": "application/json"},
+            flow_data
+        )
+        # print("rule response")
+        # print(response)
+        # print()
+        if response and response.status_code == 200:
+            self.regrasInstaladas = True
+            print("[+] Regra de Fluxo com medidor adicionada com sucesso!")
