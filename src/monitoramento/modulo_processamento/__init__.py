@@ -2,6 +2,7 @@ from requests import get, exceptions
 from time import time
 from datetime import datetime, timezone
 
+from src.utils.tratarRequisicao import tratarRequisicao
 from src.monitoramento.influxdb import InfluxDBHelper
 
 class ModuloProcessamento():
@@ -12,127 +13,83 @@ class ModuloProcessamento():
     prevTX = {} # Up
     prevRX = {} # Down
 
-    def tratarRequisicao(self, url):
-        request_url = f"{self.ROOT_URL}{url}"
-        print(f"[+] Fazendo requisição. url: {request_url}")
-        try:
-            data = get(request_url)
-            print(data)
-            if(data):
-                print("dados coletados")
-                return data.json()
-            else:
-                print("nada")
-        # except exceptions.ConnectionError:
-        #     print('[!] Não foi possível Erro de conexão')
-
-        except exceptions.ConnectionError:
-            print("[!] Erro: Falha na conexão com o servidor/host.")
-
-        except exceptions.HTTPError as err:
-            # Captura erros como 404, 500, 403, etc.
-            if data.status_code == 404:
-                print("[!] Erro: Endpoint não encontrado (404). Verifique a URL.")
-            else:
-                print(f"[!] Erro HTTP {data.status_code}: {err}")
-
-        except exceptions.Timeout:
-            print("[!] Erro: A requisição excedeu o tempo limite.")
-
-        except exceptions.RequestException as err:
-            # Captura genérica para qualquer outro erro da biblioteca requests
-            print(f"[!] Erro inesperado no requests: {err}")
-
     # Get RX e TX das portas dos switches
     def collectPortData(self, dpid):
-        url = f"/stats/port/{dpid}"
+        url = f"{self.ROOT_URL}/stats/port/{dpid}"
+
+        data = tratarRequisicao("get", url)
+
+        # Checando falha na requisição     
+        if not data:
+            return
+
+        # Passa por cada interface excluindo a LOCAL
+        dpid_str = str(dpid)
+        for port in data[dpid_str]:
+            port_no = port.get("port_no")
+            if port_no != "LOCAL":
+                # print(port.get("port_no"))
+                # rx_bytes = port.get('rx_bytes')
+                # tx_bytes = port.get('tx_bytes')
+                # rx_packets = port.get('rx_packets')
+                # tx_packets = port.get('tx_packets')
+                # rx_dropped = port.get()
+                # print(rx_bytes)
+                # print(tx_bytes)
+
+                # self.throughputUp(dpid, port_no, tx_bytes)
+                # self.throughputDown(dpid, port_no, rx_bytes)
+
+                timestamp = datetime.now(timezone.utc)
+                self.InfluxDB.write_ports_data(
+                    dpid, port_no,
+                    port.get('rx_bytes'), port.get('tx_bytes'),
+                    port.get('rx_packets'), port.get('tx_packets'), 
+                    port.get('rx_dropped'), port.get('tx_dropped'), 
+                    port.get('rx_errors'), port.get('tx_errors'), 
+                    timestamp
+                )
+
+    # Coletando taxa de medidores
+    def collectMeterData(self, dpid):
+        url = f"{self.ROOT_URL}/stats/meter/{dpid}"
 
         try:
-            data = self.tratarRequisicao(url)
+            data = tratarRequisicao("get", url)
 
             # Checando falha na requisição     
             if not data:
                 return
 
-            # Passa por cada interface excluindo a LOCAL
             dpid_str = str(dpid)
-            for port in data[dpid_str]:
-                port_no = port.get("port_no")
-                if port_no != "LOCAL":
-                    # print(port.get("port_no"))
-                    rx_bytes = port.get('rx_bytes')
-                    tx_bytes = port.get('tx_bytes')
-                    # print(rx_bytes)
-                    # print(tx_bytes)
+            print(data)
+            meter_data = data[dpid_str]
 
-                    # self.throughputUp(dpid, port_no, tx_bytes)
-                    # self.throughputDown(dpid, port_no, rx_bytes)
+            if not meter_data:
+                return
 
-                    timestamp = datetime.now(timezone.utc)
-                    self.InfluxDB.write_ports_data(dpid, port_no, rx_bytes, tx_bytes, timestamp)
+            # for meter in data[dpid_str]:
+            meter = meter_data[0]
+            print(meter)
+            if not meter:
+                return
 
+            # print(meter.get("len"))
+            # print(meter.get('band_stats'))
+            # print(meter.get('band_stats')[0].get('packet_band_count'))
+            # print(meter.get('band_stats')[0].get('byte_band_count'))
+            packet_band_count = meter.get('band_stats')[0].get('packet_band_count')
+            byte_band_count = meter.get('band_stats')[0].get('byte_band_count')
+            # print("meter id: " + meter.get("meter_id"))
+            timestamp = datetime.now(timezone.utc)
+            self.InfluxDB.write_meter_data(
+                dpid, meter.get("meter_id"),
+                meter.get('flow_count'), 
+                meter.get('packet_in_count'),
+                meter.get('byte_in_count'), 
+                packet_band_count,
+                byte_band_count,
+                timestamp
+            )
         except exceptions.ConnectionError:
             print('connection err')
-
-    # Vazão Upload
-    def throughputUp(self, dpid, port_no, tx_bytes):
-        time_now = time()
-        key = (dpid, port_no)
-
-        if key in self.prevTX:
-            # tx_bytes_prev, time_prev = self.prevTX[key]
-            
-            # dt = time_now - time_prev
-            # delta_bytes = tx_bytes - tx_bytes_prev
-
-            # if dt > 0 and delta_bytes >= 0:
-            #     # Cálculo da vazão instantânea em bits por segundo (bps)
-            #     tx_bps = (delta_bytes * 8) / dt
-                
-            #     # Para converter para Megabits por segundo (Mbps):
-            rx_mbps = self.getThroughput(key, tx_bytes, time_now)
-                
-            print(f"Switch {dpid} Porta {port_no}: {rx_mbps:.2f} Mbps")
-
-        # Atualiza o estado para o próximo ciclo de amostragem
-        self.prevTX[key] = (tx_bytes, time_now)
-
-    # Vazão Download
-    def throughputDown(self, dpid, port_no, rx_bytes):
-        time_now = time()
-        key = (dpid, port_no)
-
-        if key in self.prevRX:
-            # tx_bytes_prev, time_prev = self.prevTX[key]
-            
-            # dt = time_now - time_prev
-            # delta_bytes = tx_bytes - tx_bytes_prev
-
-            # if dt > 0 and delta_bytes >= 0:
-            #     # Cálculo da vazão instantânea em bits por segundo (bps)
-            #     tx_bps = (delta_bytes * 8) / dt
-                
-            #     # Para converter para Megabits por segundo (Mbps):
-            rx_mbps = self.getThroughput(key, rx_bytes, time_now)
-                
-            print(f"Switch {dpid} Porta {port_no}: {rx_mbps:.2f} Mbps")
-
-        # Atualiza o estado para o próximo ciclo de amostragem
-        self.prevTX[key] = (rx_bytes, time_now)
-
-    # ((bytes_atual - bytes_anterior) * 8)/t
-    def getThroughput(self, key, bytes, time_now):
-        bytes_prev, time_prev = self.prevTX[key]
-        
-        dt = time_now - time_prev
-        delta_bytes = bytes - bytes_prev
-
-        mbps = 0
-        if dt > 0 and delta_bytes >= 0:
-            # Cálculo da vazão instantânea em bits por segundo (bps)
-            bps = (delta_bytes * 8) / dt
-            
-            # Para converter para Megabits por segundo (Mbps):
-            mbps = bps / 1_000_000
-
-        return mbps
