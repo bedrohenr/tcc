@@ -50,10 +50,11 @@ class Monitoramento():
                     self.inicializaMedidoresRegras()
                     continue # Nao executa a coleta até configurar o ambiente
 
-                print("Ayooooo")
                 for switch in self.topo.switches():
-                    self.MODULO_PROCESSAMENTO.collectPortData(self.getDPID(switch))
-                    self.MODULO_PROCESSAMENTO.collectMeterData(self.getDPID(switch))
+                    dpid = self.getDPID(switch)
+                    self.MODULO_PROCESSAMENTO.collectPortData(dpid)
+                    self.MODULO_PROCESSAMENTO.collectMeterData(dpid)
+                    self.MODULO_PROCESSAMENTO.collectFlowData(dpid)
                 print()
                 sleep(1)
         except KeyboardInterrupt:

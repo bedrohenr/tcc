@@ -6,6 +6,7 @@ from influxdb_client.client.write_api import SYNCHRONOUS
 class InfluxDBHelper:
     PORTS_DATA_BUCKET="sdn_ports"
     METERS_DATA_BUCKET="sdn_meters"
+    FLOW_DATA_BUCKET="sdn_flows"
 
     def __init__(
         self, 
@@ -46,7 +47,7 @@ class InfluxDBHelper:
         try:
             self.write_api.write(bucket=self.PORTS_DATA_BUCKET, org=self.org, record=point)
         except Exception as e:
-            print(f"[!] Erro ao enviar métricas para o InfluxDB: {e}")
+            print(f"[!] Erro ao enviar métricas de portas para o InfluxDB: {e}")
         
     def write_meter_data(self, dpid, meter_id, flow_count, packet_in_count, byte_in_count, packet_band_count, byte_band_count, timestamp):
         point = (
@@ -66,25 +67,64 @@ class InfluxDBHelper:
         try:
             self.write_api.write(bucket=self.METERS_DATA_BUCKET, org=self.org, record=point)
         except Exception as e:
-            print(f"[!] Erro ao enviar métricas para o InfluxDB: {e}")
-    def write_port_throughput(self, dpid, port_no, rx_bps, tx_bps, rx_bytes, tx_bytes):
-        """
-        Escreve as métricas de vazão calculadas para uma porta específica no InfluxDB.
-        """
-        point = (
-            Point("port_throughput")
-            .tag("dpid", f"{dpid:016x}")          # DPID no formato hexadecimal de 16 dígitos
-            .tag("port_no", str(port_no))         # Número da porta no switch
-            .field("rx_bps", float(rx_bps))       # Vazão de recepção (bits/s)
-            .field("tx_bps", float(tx_bps))       # Vazão de transmissão (bits/s)
-            .field("rx_bytes", int(rx_bytes))     # Total acumulado de bytes recebidos
-            .field("tx_bytes", int(tx_bytes))     # Total acumulado de bytes transmitidos
-        )
-        
+            print(f"[!] Erro ao enviar métricas do medidor para o InfluxDB: {e}")
+
+    def write_flow_data(self, dpid, flows):
+    
         try:
-            self.write_api.write(bucket=self.bucket, org=self.org, record=point)
+            # 2. Inicializar o cliente do InfluxDB
+            # client = InfluxDBClient(url=INFLUX_URL, token=TOKEN, org=ORG)
+            # write_api = client.write_api(write_options=SYNCHRONOUS)
+
+            points = []
+            for flow in flows:
+                # Extrair contadores principais
+                packet_count = flow.get("packet_count", 0)
+                byte_count = flow.get("byte_count", 0)
+                priority = flow.get("priority", 0)
+                cookie = flow.get("cookie", 0)
+                
+                # Extrair informações do Match (critérios da regra)
+                match = flow.get("match", {})
+                in_port = match.get("in_port", "unknown")
+                nw_src = match.get("ipv4_src", match.get("nw_src", "all"))
+                nw_dst = match.get("ipv4_dst", match.get("nw_dst", "all"))
+
+                # Exemplo de extração do meter_id nas instruções do fluxo retornado pelo Ryu
+                meter_id = "none" # Valor padrão caso o fluxo não tenha QoS
+
+                if "actions" in flow:
+                    for action in flow.get("actions", None):
+                        # print("action: ")
+                        # print(action)
+                        # if "type" in action and action["type"] == "METER":
+                        #     meter_id = str(action.get("meter_id", "unknown"))
+                        action_split = action.split(":")
+                        print("action split: ", action_split)
+                        if action_split[0] == "METER":
+                            meter_id = action_split[1] # Pega o ID do meter em "METER:ID"
+                            print(meter_id)
+
+                # Construir o Point para o InfluxDB v2
+                point = Point("flow_stats") \
+                    .tag("dpid", str(dpid)) \
+                    .tag("meter_id", meter_id) \
+                    .tag("priority", str(priority)) \
+                    .tag("cookie", str(cookie)) \
+                    .tag("in_port", str(in_port)) \
+                    .tag("nw_src", str(nw_src)) \
+                    .tag("nw_dst", str(nw_dst)) \
+                    .field("packet_count", int(packet_count)) \
+                    .field("byte_count", int(byte_count))
+                
+                print("point: ")
+                print(point)
+                points.append(point)
+
+            self.write_api.write(bucket=self.FLOW_DATA_BUCKET, org=self.org, record=points)
+            print(f"[+] Sucesso: {len(points)} fluxos do DPID {dpid} registados no InfluxDB.")
         except Exception as e:
-            print(f"[!] Erro ao enviar métricas para o InfluxDB: {e}")
+            print(f"[!] Erro ao processar/enviar dados de fluxo para o InfluxDB: {e}")
 
     def close(self):
         """Encerra o cliente de forma limpa."""

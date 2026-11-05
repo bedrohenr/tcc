@@ -93,3 +93,42 @@ class ModuloProcessamento():
             )
         except exceptions.ConnectionError:
             print('connection err')
+
+    # Coletando taxa de medidores
+    def collectFlowData(self, dpid):
+        url = f"{self.ROOT_URL}/stats/flow/{dpid}"
+
+        try:
+            data = tratarRequisicao("get", url)
+
+            # Checando falha na requisição     
+            if not data:
+                return
+
+            dpid_str = str(dpid)
+            flow_data = data[dpid_str]
+
+            if not flow_data:
+                return
+
+            # for meter in data[dpid_str]:
+            
+            print("flow data")
+            print(flow_data)
+            # if not meter:
+            #     return
+
+            self.InfluxDB.write_flow_data(dpid, flow_data)
+            # packet_band_count = meter.get('band_stats')[0].get('packet_band_count') byte_band_count = meter.get('band_stats')[0].get('byte_band_count')
+            # timestamp = datetime.now(timezone.utc)
+            # self.InfluxDB.write_meter_data(
+            #     dpid, meter.get("meter_id"),
+            #     meter.get('flow_count'), 
+            #     meter.get('packet_in_count'),
+            #     meter.get('byte_in_count'), 
+            #     packet_band_count,
+            #     byte_band_count,
+            #     timestamp
+            # )
+        except exceptions.ConnectionError:
+            print('connection err')
