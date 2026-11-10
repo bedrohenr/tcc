@@ -9,4 +9,4 @@ influx bucket create --name sdn_meters --retention 7d || true
 influx bucket create --name sdn_flows --retention 48h || true
 influx bucket create --name sdn_events --retention 0 || true # 0 = retenção infinita
 
-echo "[+] Buckets 'sdn_ports', 'sdn_flows' e 'sdn_events' criados com sucesso!"
+echo "[+] Buckets criados com sucesso!"
