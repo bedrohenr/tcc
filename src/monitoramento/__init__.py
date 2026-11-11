@@ -46,9 +46,9 @@ class Monitoramento():
         try:
             sleep(5) # Aguardando inicio da API
             while True:
-                if not self.isEnvReady():
-                    self.inicializaMedidoresRegras()
-                    continue # Nao executa a coleta até configurar o ambiente
+                # if not self.isEnvReady():
+                #     self.inicializaMedidoresRegras()
+                #     continue # Nao executa a coleta até configurar o ambiente
 
                 for switch in self.topo.switches():
                     dpid = self.getDPID(switch)
@@ -138,7 +138,7 @@ class Monitoramento():
             "bands": [
                 {
                     "type": "DROP",
-                    "rate": 1000
+                    "rate": 5001
                 }
             ]
         }

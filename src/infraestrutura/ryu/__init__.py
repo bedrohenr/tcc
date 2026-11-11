@@ -8,6 +8,7 @@ class Ryu():
     VENV_PATH = '.venv'
     APP_PATH = 'ryu.app.simple_switch_13'
     APP_REST_API = 'ryu.app.ofctl_rest'
+    APP_QOS_PATH = 'src/infraestrutura/ryu/qos.py'
     APP_PORT = '6653'
     APP_LOG_FILE = 'src/infraestrutura/ryu/logs/ryu.log'
 
@@ -40,6 +41,7 @@ class Ryu():
             '--verbose',
             self.APP_PATH,
             self.APP_REST_API,
+            self.APP_QOS_PATH
         ]
 
         self.log = open(self.APP_LOG_FILE, "w")
