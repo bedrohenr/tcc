@@ -49,7 +49,7 @@ class MininetExt():
         # Configura o switch para usar sempre o OpenFlow 1.3
         ovs13Switch = self.getSwitchConfig()
 
-        link = custom(TCLink, bw=self.bandwidth)
+        link = custom(TCLink, bw=self.bandwidth, max_queue_size=50)
         # host = custom(CPULimitedHost, cpu=4)
 
         net = Mininet(
@@ -78,12 +78,16 @@ class MininetExt():
 
         # Constantes para comunicacao de todos para todos (hosts)
         PORT = 5001
-        NUM_PACOTES = 99999999999
-        MIN_DATA_SIZE = 1_000       # 1 KB
-        MAX_DATA_SIZE = 50_000_000  # 1 MB
-        PAUSA_MIN = 0.5             # Segundos
-        PAUSA_MAX = 3.0             # Segundos
-        BANDWIDTHS = ['200k', '500k', '1M', '2M', '5M', '10M', '15M']
+        MIN_DATA_SIZE = 1_000_000      # 10 MB
+        MAX_DATA_SIZE = 7_000_000     # 100 MB
+        PAUSA_MIN = 0.5                 # Segundos
+        PAUSA_MAX = 3.0                 # Segundos
+        MIN_BW = 500_000                # 500 Kbps               
+        MAX_BW = 5_000_000              # 5   Mbps
+        # BANDWIDTHS = [
+        #     '100k', '200k', '300k', '400k', '500k', '600k', '700k', '800k', '900k',
+        #     '1M',   '2M',   '3M',   '4M',   '5M'
+        # ]
 
         print("[*] Subindo servidores iperf em background em todos os hosts...")
         for h in hosts:
@@ -93,7 +97,7 @@ class MininetExt():
         sleep(1)
             
         try:
-            for i in range(NUM_PACOTES):
+            while True:
                 # Randomiza os hosts a serem escolhidos (Origem != Destino)
                 origem, destino = sample(hosts, 2)
 
@@ -103,25 +107,36 @@ class MininetExt():
                 # Randomiza o intervalo de pausa
                 pausa = uniform(PAUSA_MIN, PAUSA_MAX)
 
-                bandwidth = choice(BANDWIDTHS)
+                bandwidth = randint(MIN_BW, MAX_BW)
 
                 # Dispara o cliente iperf em background (&)
                 cmd = f"iperf -c {destino.IP()} -p {PORT} -n {data_size} -u -b {bandwidth} -y c > /dev/null 2>&1 &"
                 origem.cmd(cmd)
 
-                print(f"[{i+1}/∞] {origem.name} ({origem.IP()}) -> {destino.name} ({destino.IP()}) | {data_size / 1e6:.2f} MB @ {bandwidth}")
+                print(f"[++] {origem.name} ({origem.IP()}) -> {destino.name} ({destino.IP()}) | {data_size / 1e6:.2f} MB @ {self.formatBw(bandwidth)}")
 
                 # Aguardando o tempo aleatorio
                 sleep(pausa)
 
-            print("\n[!] Fim da geração de tráfego.")
-
         except KeyboardInterrupt:
             print("\n[!] Geração de tráfego interrompida pelo usuário.")
+            print("\n[-] Fim da geração de tráfego.")
         finally:
             print("[*] Encerrando processos iperf nos hosts...")
             for h in hosts:
                 h.cmd('killall -9 iperf > /dev/null 2>&1')
+
+    def formatBw(self, bps):
+        """Converte um valor em bps para uma string legível em kbps ou Mbps."""
+        if bps >= 1_000_000:
+            # Formata em Mbps se for maior ou igual a 1 milhão
+            val = bps / 1_000_000
+            return f"{val:.2f} Mbps".rstrip('0').rstrip('.')
+        elif bps >= 1_000:
+            # Formata em kbps se for maior ou igual a mil
+            val = bps / 1_000
+            return f"{val:.1f} kbps".rstrip('0').rstrip('.')
+        return f"{int(bps)} bps"
 
     def clean(self):
         info('[*] Limpando residuos de execuções anteriores')

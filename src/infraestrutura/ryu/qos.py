@@ -20,7 +20,7 @@ class GlobalQoSMeterApp(app_manager.RyuApp):
 
         # --- PASSO 1: Criar o Meter no Switch ---
         # Define a banda máxima (ex: 5000 kbps = 5 Mbps) com política de descarte (DROP)
-        bands = [parser.OFPMeterBandDrop(rate=5000, burst_size=0)]
+        bands = [parser.OFPMeterBandDrop(rate=15000, burst_size=50)]
         
         meter_mod = parser.OFPMeterMod(
             datapath=datapath,
