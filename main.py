@@ -19,7 +19,7 @@ if __name__ == '__main__':
         monitoramento.startProcess()
 
         # Infraestrutura
-        infraestrutura = Infraestrutura(100, topo, flags.test)
+        infraestrutura = Infraestrutura(15, topo, flags.test)
         infraestrutura.up()
     except KeyboardInterrupt:
         print("\n[!] Simulação interrompida pelo usuário.")
